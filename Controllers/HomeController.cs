@@ -7,16 +7,27 @@ namespace AdsApp.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly AdsService _advertisementService;
+    private readonly HttpClient _httpClient;
+   
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, AdsService advertisementService, HttpClient httpClient)
     {
         _logger = logger;
+        _advertisementService = advertisementService;
+        _httpClient = httpClient;
     }
-
-    public IActionResult Index()
+    
+    public async Task<IActionResult> Index()
     {
-        return View();
+        // Gauname skelbimus iš AdvertisementService
+        IEnumerable<Ad> advertisements = await _advertisementService.GetAdvertisementsAsync();
+            
+        // Grąžiname Index Razor puslapį su gautais skelbimais
+        return View(advertisements);
     }
+    
+    
 
     public IActionResult Privacy()
     {

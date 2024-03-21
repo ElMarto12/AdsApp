@@ -1,8 +1,35 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Ad>
+
+@{
+    ViewData["Title"] = "Advertisements"; // Puslapio pavadinimas
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container">
+    
+    <div class="row">
+        @if (Model.Any())
+        {
+            <div class="text-center">
+                <h1 class="display-4">Advertisements</h1>
+            </div>
+            
+            @foreach (var ad in Model)
+            {
+                <div class="col-md-4">
+                    <div class="card mb-4 box-shadow">
+                        <div class="card-body">
+                            <img class="img-fluid" src="@Url.Content("~/images/" + ad.ImagePath)" alt="Ad Image"/>
+                            <h5 class="card-title">@ad.Title</h5>
+                            <p class="card-text">@ad.Description</p>
+                            <p class="card-text">@ad.Price</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <h1>No advertisements</h1>
+        }
+    </div>
 </div>

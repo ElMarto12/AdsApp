@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace AdsWebPage.Models;
+namespace AdsApp.Models;
 
 public class ApplicationDbContext : DbContext
 {
