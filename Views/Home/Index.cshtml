@@ -6,6 +6,11 @@
 
 <div class="container">
     
+    @if (Context.User.Identity != null && Context.User.Identity.IsAuthenticated)
+    {
+        <h3>Welcome @User.Identity?.Name</h3>
+    }
+    
     <div class="row">
         @if (Model.Any())
         {
