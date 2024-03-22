@@ -30,4 +30,10 @@ public class LoginController : Controller
 
         return RedirectToAction("Index", "Home", new { area = " " });
     }
+
+    public async Task<IActionResult> LogOut()
+    {
+        await HttpContext.SignOutAsync();
+        return RedirectToAction("Index", "Home");
+    }
 }

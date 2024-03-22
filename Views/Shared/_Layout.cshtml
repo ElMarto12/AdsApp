@@ -28,6 +28,12 @@
                     <li class="nav-item">
                         <a asp-controller="Login" asp-action="Login" class="btn btn-primary">Login With Google</a>
                     </li>
+                    @if (Context.User.Identity != null && Context.User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a asp-controller="Login" asp-action="LogOut" class="btn btn-info">Log Out</a>
+                        </li>
+                    }
                 </ul>
             </div>
         </div>
