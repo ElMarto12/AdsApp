@@ -18,15 +18,7 @@ public class LoginController : Controller
     
     public async Task<IActionResult> GoogleResponse()
     {
-        var result = await HttpContext.AuthenticateAsync((CookieAuthenticationDefaults.AuthenticationScheme));
-
-        var claim = result.Principal.Identities.FirstOrDefault().Claims.Select(claim => new
-        {
-            claim.Issuer,
-            claim.OriginalIssuer,
-            claim.Type,
-            claim.Value
-        });
+        await HttpContext.AuthenticateAsync((CookieAuthenticationDefaults.AuthenticationScheme));
 
         return RedirectToAction("Index", "Home", new { area = " " });
     }

@@ -1,5 +1,7 @@
-﻿using AdsApp.Models;
+﻿using System.Security.Claims;
+using AdsApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.EntityFrameworkCore;
 
 namespace AdsApp.Controllers;
@@ -9,11 +11,13 @@ namespace AdsApp.Controllers;
 public class AdsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly IWebHostEnvironment _webHostEnvironment;
     
 
-    public AdsController(ApplicationDbContext context)
+    public AdsController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
     {
         _context = context;
+        _webHostEnvironment = webHostEnvironment;
     }
 
     // GET: api/Advertisements
@@ -37,15 +41,58 @@ public class AdsController : ControllerBase
         return advertisement;
     }
 
-    // POST: api/Advertisements
     [HttpPost]
-    public async Task<ActionResult<Ad>> PostAdvertisement(Ad advertisement)
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<Ad>> PostAdvertisement([FromForm] AdInput adInput, IFormFile image)
     {
+        
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+        
+        var advertisement = new Ad
+        {
+            OwnerId = userId,
+            Title = adInput.Title,
+            Price = adInput.Price,
+            Description = adInput.Description
+        };
+
+        if (image != null && image.Length > 0)
+        {
+            advertisement.ImagePath = await SaveImage(image);
+        }
+        
         _context.Ads.Add(advertisement);
         await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetAdvertisement), new { id = advertisement.Id }, advertisement);
+        
+        return  RedirectToAction("Index", "Home");
     }
+
+    
+    private async Task<string> SaveImage(IFormFile? image)
+    {
+        if (image == null || image.Length == 0)
+        {
+            return null;
+        }
+        
+        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+        
+        var webRootPath = _webHostEnvironment.WebRootPath;
+        var filePath = Path.Combine(webRootPath, "images", fileName);
+        
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await image.CopyToAsync(stream);
+        }
+
+        return fileName;
+    }
+
 
     // PUT: api/Advertisements/5
     [HttpPut("{id}")]

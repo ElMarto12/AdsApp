@@ -20,15 +20,17 @@ public class HomeController : Controller
     
     public async Task<IActionResult> Index()
     {
-        // Gauname skelbimus iš AdvertisementService
         IEnumerable<Ad> advertisements = await _advertisementService.GetAdvertisementsAsync();
-            
-        // Grąžiname Index Razor puslapį su gautais skelbimais
+        
         return View(advertisements);
     }
-    
-    
 
+    public IActionResult CreateAd()
+    {
+        return View();
+
+    }
+    
     public IActionResult Privacy()
     {
         return View();

@@ -28,8 +28,8 @@ builder.Services.AddAuthentication(options =>
     .AddCookie()
     .AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value;
-        options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value;
+        options.ClientId = builder.Configuration.GetSection("GoogleKeys:ClientId").Value ?? string.Empty;
+        options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value ?? string.Empty;
     });
 
 builder.Services.AddControllersWithViews();

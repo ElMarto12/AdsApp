@@ -2,13 +2,7 @@
 
 namespace AdsApp.Models;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    
-        : base(options)
-    {
-    }
-
-    public DbSet<Ad> Ads { get; set; } = null!;
+    public required DbSet<Ad> Ads { get; set; }
 }

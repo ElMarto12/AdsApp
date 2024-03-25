@@ -1,5 +1,4 @@
-﻿@using Microsoft.AspNetCore.Identity.UI;
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
@@ -22,7 +21,7 @@
                     @if (Context.User.Identity is { IsAuthenticated: true })
                     {
                         <li class="nav-item">
-                            <a asp-controller="Login" asp-action="LogOut" class="btn btn-light mx-2 my-2">Create Ad</a>
+                            <a asp-controller="Home" asp-action="CreateAd" class="btn btn-light mx-2 my-2">Create Ad</a>
                         </li>
                         <li class="nav-item">
                             <a asp-controller="Login" asp-action="LogOut" class="btn btn-light mx-2 my-2">Edit Ad</a>
