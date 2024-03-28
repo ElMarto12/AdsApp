@@ -1,13 +1,13 @@
 ﻿using System.Security.Claims;
 using AdsApp.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.EntityFrameworkCore;
 
 namespace AdsApp.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] 
+[Route("api/[controller]")]
 public class AdsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -26,23 +26,36 @@ public class AdsController : ControllerBase
     {
         return await _context.Ads.ToListAsync();
     }
-
-    // GET: api/Advertisements/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Ad>> GetAdvertisement(int id)
+    
+    [HttpGet]
+    [Route("owner")]
+    public async Task<ActionResult<IEnumerable<Ad>>> GetAdvertisementsByOwnerId(string userId)
     {
-        var advertisement = await _context.Ads.FindAsync(id);
-
-        if (advertisement == null)
+        try
         {
-            return NotFound();
+            var advertisements = await _context.Ads
+                .Where(ad => ad.OwnerId == userId)
+                .ToListAsync();
+            
+            if (!advertisements.Any())
+            {
+                return NotFound();
+            }
+            return advertisements;
         }
-
-        return advertisement;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Klaida gaunant skelbimus pagal naudotojo ID: {ex.Message}");
+            return BadRequest();
+        }
     }
+
+
+
 
     [HttpPost]
     [Consumes("multipart/form-data")]
+    [Authorize]
     public async Task<ActionResult<Ad>> PostAdvertisement([FromForm] AdInput adInput, IFormFile image)
     {
         

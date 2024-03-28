@@ -1,14 +1,15 @@
-﻿@model IEnumerable<Ad>
+﻿@using System.Security.Claims
+@model IEnumerable<Ad>
 
 @{
-    ViewData["Title"] = "Advertisements"; // Puslapio pavadinimas
+    ViewData["Title"] = "Advertisements";
 }
 
 <div class="container">
     
     @if (Context.User.Identity != null && Context.User.Identity.IsAuthenticated)
     {
-        <h3>Welcome @User.Identity?.Name</h3>
+        <h3>Welcome @User.Identity?.Name - @User.FindFirst(ClaimTypes.NameIdentifier)?.Value</h3>
     }
     
     <div class="row">

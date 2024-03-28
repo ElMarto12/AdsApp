@@ -17,7 +17,7 @@ builder.Services.AddScoped<HomeController>();
 builder.Services.AddScoped<HttpClient>();
 builder.Services.AddHttpClient<AdsService>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5175/api/Ads");
+    client.BaseAddress = new Uri("http://localhost:5175/");
 });
 
 builder.Services.AddAuthentication(options => 
@@ -32,7 +32,6 @@ builder.Services.AddAuthentication(options =>
         options.ClientSecret = builder.Configuration.GetSection("GoogleKeys:ClientSecret").Value ?? string.Empty;
     });
 
-builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 

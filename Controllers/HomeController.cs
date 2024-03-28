@@ -1,22 +1,23 @@
 using System.Diagnostics;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using AdsApp.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AdsApp.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    
     private readonly AdsService _advertisementService;
-    private readonly HttpClient _httpClient;
+  
    
 
-    public HomeController(ILogger<HomeController> logger, AdsService advertisementService, HttpClient httpClient)
+    public HomeController(AdsService advertisementService)
     {
-        _logger = logger;
         _advertisementService = advertisementService;
-        _httpClient = httpClient;
     }
+    
     
     public async Task<IActionResult> Index()
     {
@@ -25,15 +26,21 @@ public class HomeController : Controller
         return View(advertisements);
     }
 
+    [Authorize]
     public IActionResult CreateAd()
     {
         return View();
 
     }
     
-    public IActionResult Privacy()
+    
+    [Authorize]
+    public async Task<IActionResult> OwnerAd()
     {
-        return View();
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var advertisements = await _advertisementService.GetAdvertisementsByOwnerIdAsync(userId);
+        return View(advertisements);
+
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
