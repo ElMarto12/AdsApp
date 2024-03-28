@@ -8,39 +8,45 @@ namespace AdsApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AdsController : ControllerBase
+public class AdsController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+    : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IWebHostEnvironment _webHostEnvironment;
-    
-
-    public AdsController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
-    {
-        _context = context;
-        _webHostEnvironment = webHostEnvironment;
-    }
-
     // GET: api/Advertisements
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Ad>>> GetAdvertisements()
     {
-        return await _context.Ads.ToListAsync();
+        return await context.Ads.ToListAsync();
     }
-    
+
+    [HttpGet]
+    [Route("id")]
+    public async Task<ActionResult<Ad>> GetAdvertisementById(int id)
+    {
+        var advertisement = await context.Ads.FindAsync(id);
+
+        if (advertisement == null)
+        {
+            return NotFound();
+        }
+
+        return RedirectToAction("SelectedAd", "Home", advertisement);
+    }
+
     [HttpGet]
     [Route("owner")]
     public async Task<ActionResult<IEnumerable<Ad>>> GetAdvertisementsByOwnerId(string userId)
     {
         try
         {
-            var advertisements = await _context.Ads
+            var advertisements = await context.Ads
                 .Where(ad => ad.OwnerId == userId)
                 .ToListAsync();
-            
+
             if (!advertisements.Any())
             {
                 return NotFound();
             }
+
             return advertisements;
         }
         catch (Exception ex)
@@ -49,23 +55,22 @@ public class AdsController : ControllerBase
             return BadRequest();
         }
     }
-
-
-
+    
 
     [HttpPost]
     [Consumes("multipart/form-data")]
+    [Route("Post")]
     [Authorize]
-    public async Task<ActionResult<Ad>> PostAdvertisement([FromForm] AdInput adInput, IFormFile image)
+    public async Task<ActionResult> PostAdvertisement([FromForm] AdInput adInput, IFormFile image)
     {
-        
+
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
+
         if (userId == null)
         {
             return Unauthorized();
         }
-        
+
         var advertisement = new Ad
         {
             OwnerId = userId,
@@ -78,13 +83,31 @@ public class AdsController : ControllerBase
         {
             advertisement.ImagePath = await SaveImage(image);
         }
-        
-        _context.Ads.Add(advertisement);
-        await _context.SaveChangesAsync();
-        
-        return  RedirectToAction("Index", "Home");
-    }
 
+        context.Ads.Add(advertisement);
+        await context.SaveChangesAsync();
+
+        return RedirectToAction("Index", "Home");
+    }
+    
+    [HttpPost]
+    [HttpPut]
+    [Consumes("multipart/form-data")]
+    [Route("Update")]
+    [Authorize]
+    public async Task<ActionResult> UpdateAdvertisement([FromForm] Ad advertisement, IFormFile image)
+    {
+        if (image == null)
+        {
+            advertisement.ImagePath = await SaveImage(image);
+        }
+    
+        context.Entry(advertisement).State = EntityState.Modified;
+    
+        await context.SaveChangesAsync();
+    
+        return RedirectToAction("Index", "Home");
+    }
     
     private async Task<string> SaveImage(IFormFile? image)
     {
@@ -92,12 +115,12 @@ public class AdsController : ControllerBase
         {
             return null;
         }
-        
+
         var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
-        
-        var webRootPath = _webHostEnvironment.WebRootPath;
+
+        var webRootPath = webHostEnvironment.WebRootPath;
         var filePath = Path.Combine(webRootPath, "images", fileName);
-        
+
         using (var stream = new FileStream(filePath, FileMode.Create))
         {
             await image.CopyToAsync(stream);
@@ -105,56 +128,32 @@ public class AdsController : ControllerBase
 
         return fileName;
     }
-
-
-    // PUT: api/Advertisements/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutAdvertisement(int id, Ad advertisement)
+    
+    [HttpPost]
+    [HttpDelete]
+    [Route("id")]
+    [Authorize]
+    public async Task<ActionResult> DeleteAdvertisement(int id)
     {
-        if (id != advertisement.Id)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(advertisement).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!AdvertisementExists(id))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        return NoContent();
-    }
-
-    // DELETE: api/Advertisements/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteAdvertisement(int id)
-    {
-        var advertisement = await _context.Ads.FindAsync(id);
+        var advertisement = await context.Ads.FindAsync(id);
         if (advertisement == null)
         {
             return NotFound();
         }
 
-        _context.Ads.Remove(advertisement);
-        await _context.SaveChangesAsync();
+        DeleteImage(advertisement.ImagePath);
+        
+        context.Ads.Remove(advertisement);
+        await context.SaveChangesAsync();
 
-        return NoContent();
+        return RedirectToAction("OwnerAd", "Home");
     }
 
-    private bool AdvertisementExists(int id)
+    private void DeleteImage(string image)
     {
-        return _context.Ads.Any(e => e.Id == id);
+        var path = webHostEnvironment.WebRootPath;
+        var filePath = Path.Combine(path, "images", image);
+        
+        System.IO.File.Delete(filePath);
     }
 }

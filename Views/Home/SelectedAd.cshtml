@@ -1,0 +1,30 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model Ad
+
+@{
+    ViewData["Title"] = "Edit Ad";
+}
+
+<form method="post" enctype="multipart/form-data" asp-controller="Ads" asp-action="UpdateAdvertisement">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="OwnerId"/>
+    <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" asp-for="Title">
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="3" asp-for="Description"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="price" class="form-label">Price</label>
+        <input type="number" class="form-control" id="price" name="price" asp-for="Price">
+    </div>
+    <div class="mb-3">
+        <label for="image" class="form-label">Image</label>
+        @* <img class="img-fluid" width="300px" height="300px" src="@Url.Content("~/images/" + Model.ImagePath)" alt="Ad Image"/> *@
+        <input type="file" class="form-control" id="image" name="image" accept="image/*" required="">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
