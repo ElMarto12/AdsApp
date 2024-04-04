@@ -11,7 +11,6 @@ namespace AdsApp.Controllers;
 public class AdsController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
     : ControllerBase
 {
-    // GET: api/Advertisements
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Ad>>> GetAdvertisements()
     {
@@ -20,6 +19,7 @@ public class AdsController(ApplicationDbContext context, IWebHostEnvironment web
 
     [HttpGet]
     [Route("id")]
+    [Authorize]
     public async Task<ActionResult<Ad>> GetAdvertisementById(int id)
     {
         var advertisement = await context.Ads.FindAsync(id);
@@ -51,7 +51,7 @@ public class AdsController(ApplicationDbContext context, IWebHostEnvironment web
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Klaida gaunant skelbimus pagal naudotojo ID: {ex.Message}");
+            Console.WriteLine($"Error ID: {ex.Message}");
             return BadRequest();
         }
     }
@@ -61,7 +61,7 @@ public class AdsController(ApplicationDbContext context, IWebHostEnvironment web
     [Consumes("multipart/form-data")]
     [Route("Post")]
     [Authorize]
-    public async Task<ActionResult> PostAdvertisement([FromForm] AdInput adInput, IFormFile image)
+    public async Task<ActionResult> PostAdvertisement([FromForm] AdInput adInput, IFormFile? image)
     {
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -81,7 +81,7 @@ public class AdsController(ApplicationDbContext context, IWebHostEnvironment web
 
         if (image != null && image.Length > 0)
         {
-            advertisement.ImagePath = await SaveImage(image);
+            advertisement.ImagePath = await SaveImage(image) ?? throw new InvalidOperationException();
         }
 
         context.Ads.Add(advertisement);
@@ -95,21 +95,34 @@ public class AdsController(ApplicationDbContext context, IWebHostEnvironment web
     [Consumes("multipart/form-data")]
     [Route("Update")]
     [Authorize]
-    public async Task<ActionResult> UpdateAdvertisement([FromForm] Ad advertisement, IFormFile image)
+    public async Task<ActionResult> UpdateAdvertisement([FromForm] AdOutput advertisement, IFormFile? image)
     {
-        if (image == null)
+        var ad = new Ad
+        {   
+            Id = advertisement.Id,
+            OwnerId = advertisement.OwnerId,
+            Title = advertisement.Title,
+            Price = advertisement.Price,
+            Description = advertisement.Description,
+        };
+
+        if (image != null)
         {
-            advertisement.ImagePath = await SaveImage(image);
+            DeleteImage(advertisement.ImagePath ?? throw new InvalidOperationException());
+            ad.ImagePath = await SaveImage(image) ?? throw new InvalidOperationException();
         }
-    
-        context.Entry(advertisement).State = EntityState.Modified;
-    
+        else
+        {
+            ad.ImagePath = advertisement.ImagePath ?? throw new InvalidOperationException();
+        }
+        
+        context.Entry(ad).State = EntityState.Modified;
         await context.SaveChangesAsync();
     
         return RedirectToAction("Index", "Home");
     }
     
-    private async Task<string> SaveImage(IFormFile? image)
+    private async Task<string?> SaveImage(IFormFile? image)
     {
         if (image == null || image.Length == 0)
         {
@@ -151,9 +164,16 @@ public class AdsController(ApplicationDbContext context, IWebHostEnvironment web
 
     private void DeleteImage(string image)
     {
-        var path = webHostEnvironment.WebRootPath;
-        var filePath = Path.Combine(path, "images", image);
+        try
+        {
+            var path = webHostEnvironment.WebRootPath;
+            var filePath = Path.Combine(path, "images", image);
         
-        System.IO.File.Delete(filePath);
+            System.IO.File.Delete(filePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Image was null {ex.Message}");
+        }
     }
 }
